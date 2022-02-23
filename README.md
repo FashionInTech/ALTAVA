@@ -1,1 +1,1 @@
-# ALTAVA $TAVA Token BEP20
+# $TAVA Token (BEP20)
