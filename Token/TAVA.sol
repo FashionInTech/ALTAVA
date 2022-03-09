@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity 0.8.11;
+pragma solidity 0.8.12;
 
 import "./ERC20Interface.sol";
-import "../Utils/Ownable.sol";
 import "../Utils/Pausable.sol";
 
-contract Tava is ERC20Interface,Ownable,Pausable{
+contract Tava is ERC20Interface, Pausable{
     
     string private _name = "TAVA";
     string private _symbol = "TAVA";
