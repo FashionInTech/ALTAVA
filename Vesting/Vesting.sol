@@ -38,31 +38,16 @@ contract Vesting is Ownable{
     // event raised on each successful vesting transfer
     event successfulVesting(address indexed __receiver, uint256 indexed amount, uint256 indexed timestamp);
 
-    /*
-
-    Mapping
-
-    */
-
+    // Mapping
     mapping(address => VestingforAddress) public vestingMap;
 
-    /* 
-
-    Constructor 
-
-    */
-
+    //Constructor
     constructor (Tava token){
         TavaToken = token;
     }
 
 
-    /*
-
-    Function 
-
-    */
-    
+    //Function    
     function getStageAttributes (address receiving, uint8 index) external view returns ( uint256 time, uint256 amount) {
         if(vestingMap[receiving].stages[index].exists == true) return ( vestingMap[receiving].stages[index].time, vestingMap[receiving].stagesUnlockAmount);
     }
@@ -87,16 +72,9 @@ contract Vesting is Ownable{
        vestingforaddress[vestingID].tokensToSend=0;
        vestingforaddress[vestingID].valid = true;
 
-       uint256 __time=_startTime;
-
-       vestingforaddress[vestingID].stages.push();
-       vestingforaddress[vestingID].stages[0].time=__time;
-       vestingforaddress[vestingID].stages[0].exists=true;
-
-       for(uint8 i=1; i<_stageNum ;i++){
+       for(uint8 i=0; i<_stageNum ;i++){
            vestingforaddress[vestingID].stages.push();
-           __time+=_duration;
-           vestingforaddress[vestingID].stages[i].time=__time;
+           vestingforaddress[vestingID].stages[i].time=_startTime + (_duration * i);
            vestingforaddress[vestingID].stages[i].exists=true;
        }
 
@@ -124,14 +102,8 @@ contract Vesting is Ownable{
                 vestingMap[_receiver].tokensToSend=0;
                 vestingMap[_receiver].valid = _valid;
 
-                uint256 __time=_startTime;
-
-                vestingMap[_receiver].stages[0].time=_startTime;
-                vestingMap[_receiver].stages[0].exists=true;
-                
-                for(uint8 j=1; j<_stageNum ;j++){
-                    __time+=_duration;
-                    vestingMap[_receiver].stages[j].time=__time;
+                for(uint8 j=0; j<_stageNum ;j++){
+                    vestingMap[_receiver].stages[j].time=_startTime + (_duration * j);
                     vestingMap[_receiver].stages[j].exists=true;
             }
         }
@@ -139,7 +111,6 @@ contract Vesting is Ownable{
     }
 
     //cancel vesting 
-
     function cancelVesting(address _addr) external onlyOwner{
         for(uint8 i=0 ; i<=vestingID ; i++){
             if(vestingforaddress[i].receiver == _addr){
@@ -148,8 +119,7 @@ contract Vesting is Ownable{
         }
     }
 
-    // claim tokens 
-
+    // claim tokens
     function addressExist(address _addr) internal view returns (bool){
         if(msg.sender == vestingMap[_addr].receiver) return true;
         else return false; 
