@@ -132,12 +132,12 @@ contract TavaVesting is ITavaVesting, Ownable, ReentrancyGuard {
         external override onlyOwner
     {
         uint256 _TavaBalance = IERC20(tavaTokenAddress).balanceOf(address(this));
-        IERC20(tavaTokenAddress).transferFrom(address(this), owner(), _TavaBalance);
+        IERC20(tavaTokenAddress).transfer(owner(), _TavaBalance);
     }
 
     function claimTava(uint256 _amount) 
         external override onlyOwner
     {
-        IERC20(tavaTokenAddress).transferFrom(address(this), owner(), _amount.mul(tavaDecimal));
+        IERC20(tavaTokenAddress).transfer(owner(), _amount.mul(tavaDecimal));
     }
 }
