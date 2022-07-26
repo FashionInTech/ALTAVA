@@ -3,6 +3,20 @@
 pragma solidity 0.8.9;
 
 interface ITavaVesting {
+    /** 
+        setVesting_ERR01 : The amount you are trying to pay is too small.
+        setVesting_ERR02 : duration must be greater than zero.
+        setVesting_ERR03 : unlockCnt must be greater than zero.
+
+        cancelVesting_ERR01 : Cancellation is not possible after receiving the compensation.
+        cancelVesting_ERR02 : Cancellable period has passed.
+
+        claimVesting_ERR01 : This is a canceled vesting
+        claimVesting_ERR02 : There is no quantity available yet.
+        claimVesting_ERR03 : All tokens received.
+        claimVesting_ERR04 : There is no balance available.
+    */ 
+
 
     // [private] condition 정보 구조체
     struct VestingCondition {

@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./ITavaVesting.sol";
+import "./interface/ITavaVesting.sol";
 
 contract TavaVesting is ITavaVesting, Ownable, ReentrancyGuard {
     using SafeMath for uint256;
@@ -83,8 +83,11 @@ contract TavaVesting is ITavaVesting, Ownable, ReentrancyGuard {
         uint256 _unlockCnt,
         uint256 _StartDt
     ) 
-        external override onlyOwner
+        external override onlyOwner notZeroAddress(_receiver)
     {
+        require(_unlockedTokenAmount > 0, "setVesting_ERR01");
+        require(_duration > 0, "setVesting_ERR02");
+        require(_unlockCnt > 0, "setVesting_ERR03");
         VestingCondition memory _vestingCondition = VestingCondition(_duration, _unlockCnt, _StartDt);
         vestingInfoToWallets[_receiver].push(VestingInfo(_vestingCondition, _unlockedTokenAmount, 0, true));
         IERC20(tavaTokenAddress).transferFrom(_msgSender(), address(this), _unlockedTokenAmount.mul(tavaDecimal));
@@ -95,9 +98,9 @@ contract TavaVesting is ITavaVesting, Ownable, ReentrancyGuard {
     function cancelVesting(address _receiver, uint256 _vestingIdx) 
         external override onlyOwner
     {
-        require(sentTavasToAdr(_receiver, _vestingIdx) == 0, "Cancellation is not possible after receiving the compensation.");
+        require(sentTavasToAdr(_receiver, _vestingIdx) == 0, "cancelVesting_ERR01");
         uint256 _elapsedDays = getElapsedDays(_receiver, _vestingIdx);
-        require(_elapsedDays == 0, "Cancellable period has passed.");
+        require(_elapsedDays == 0, "cancelVesting_ERR02");
         TotalTokensReceiveable = TotalTokensReceiveable.sub(vestingInfoToWallets[_receiver][_vestingIdx].TotalAmount);
         vestingInfoToWallets[_receiver][_vestingIdx].valid = false;
         emit canceledVesting(_receiver, _vestingIdx);
@@ -112,13 +115,14 @@ contract TavaVesting is ITavaVesting, Ownable, ReentrancyGuard {
     function claimVesting(uint256 _vestingIdx) 
         external override notZeroAddress(_msgSender()) nonReentrant returns(uint256 _TokenPayout)
     {
-        require(vestingInfoToWallets[_msgSender()][_vestingIdx].valid, "This is a canceled vesting");
+        require(vestingInfoToWallets[_msgSender()][_vestingIdx].valid, "claimVesting_ERR01");
         uint256 _elapsedDays = getElapsedDays(_msgSender(), _vestingIdx);
-        require(_elapsedDays > 0, "There is no quantity available yet.");
+        require(_elapsedDays > 0, "claimVesting_ERR02");
         uint256 _tokensSent = sentTavasToAdr(_msgSender(), _vestingIdx);
         uint256 _TotalAmount = vestingInfoToWallets[_msgSender()][_vestingIdx].TotalAmount;
-        require(_TotalAmount > _tokensSent, "All tokens received.");
+        require(_TotalAmount > _tokensSent, "claimVesting_ERR03");
         uint256 _currentAmount = TokensCurrentlyReceiveable(_msgSender(), _vestingIdx);
+        require(_currentAmount > 0, "claimVesting_ERR04");
 
         IERC20(tavaTokenAddress).transfer(_msgSender(), _currentAmount.mul(tavaDecimal));
         vestingInfoToWallets[_msgSender()][_vestingIdx].tokensSent += _currentAmount;
