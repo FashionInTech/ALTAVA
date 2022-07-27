@@ -47,7 +47,7 @@ contract TavaVesting is ITavaVesting, Ownable, ReentrancyGuard {
         if(_elapsedDays > _vestingCondition.unlockCnt){
             _elapsedDays = _vestingCondition.unlockCnt;
         }
-        uint256 _tokensPerStage = _TotalAmount.div(_vestingCondition.unlockCnt);
+        uint256 _tokensPerStage = _TotalAmount.mul(tavaDecimal).div(_vestingCondition.unlockCnt);
         return _ReciveableTokens = _tokensPerStage.mul(_elapsedDays)-sentTavasToAdr(_receiver, _vestingIdx);
     }
 
@@ -124,7 +124,7 @@ contract TavaVesting is ITavaVesting, Ownable, ReentrancyGuard {
         uint256 _currentAmount = TokensCurrentlyReceiveable(_msgSender(), _vestingIdx);
         require(_currentAmount > 0, "claimVesting_ERR04");
 
-        IERC20(tavaTokenAddress).transfer(_msgSender(), _currentAmount.mul(tavaDecimal));
+        IERC20(tavaTokenAddress).transfer(_msgSender(), _currentAmount);
         vestingInfoToWallets[_msgSender()][_vestingIdx].tokensSent += _currentAmount;
         TotalTokensReceived += _currentAmount;
         emit claimedVesting(_msgSender(), _vestingIdx, _currentAmount, block.timestamp);
