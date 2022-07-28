@@ -123,13 +123,14 @@ contract TavaVesting is ITavaVesting, Ownable, ReentrancyGuard {
         require(_TotalAmount > _tokensSent, "claimVesting_ERR03");
         uint256 _currentAmount = TokensCurrentlyReceiveable(_msgSender(), _vestingIdx);
         require(_currentAmount > 0, "claimVesting_ERR04");
+        uint256 _currentAmountToTava = _currentAmount.div(tavaDecimal);
 
         IERC20(tavaTokenAddress).transfer(_msgSender(), _currentAmount);
-        vestingInfoToWallets[_msgSender()][_vestingIdx].tokensSent += _currentAmount;
-        TotalTokensReceived += _currentAmount.div(tavaDecimal);
-        emit claimedVesting(_msgSender(), _vestingIdx, _currentAmount, block.timestamp);
+        vestingInfoToWallets[_msgSender()][_vestingIdx].tokensSent += _currentAmountToTava;
+        TotalTokensReceived += _currentAmountToTava;
+        emit claimedVesting(_msgSender(), _vestingIdx, _currentAmountToTava, block.timestamp);
 
-        _TokenPayout = _currentAmount;
+        _TokenPayout = _currentAmountToTava;
     }
 
     function claimTava() 
