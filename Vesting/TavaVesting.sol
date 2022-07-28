@@ -126,7 +126,7 @@ contract TavaVesting is ITavaVesting, Ownable, ReentrancyGuard {
 
         IERC20(tavaTokenAddress).transfer(_msgSender(), _currentAmount);
         vestingInfoToWallets[_msgSender()][_vestingIdx].tokensSent += _currentAmount;
-        TotalTokensReceived += _currentAmount;
+        TotalTokensReceived += _currentAmount.div(tavaDecimal);
         emit claimedVesting(_msgSender(), _vestingIdx, _currentAmount, block.timestamp);
 
         _TokenPayout = _currentAmount;
