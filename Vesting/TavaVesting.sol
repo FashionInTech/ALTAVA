@@ -30,7 +30,6 @@ contract TavaVesting is ITavaVesting, Ownable, ReentrancyGuard {
         _;
     }
 
-    // TAVA 잔액 조회
     function BalanceToAddress(address account) 
         external view returns(uint256)
     {
@@ -47,8 +46,20 @@ contract TavaVesting is ITavaVesting, Ownable, ReentrancyGuard {
         if(_elapsedDays > _vestingCondition.unlockCnt){
             _elapsedDays = _vestingCondition.unlockCnt;
         }
+
+        if(_elapsedDays == 0) {
+            return 0;
+        }
+
         uint256 _tokensPerStage = _TotalAmount.mul(tavaDecimal).div(_vestingCondition.unlockCnt);
-        return _ReciveableTokens = _tokensPerStage.mul(_elapsedDays)-sentTavasToAdr(_receiver, _vestingIdx);
+        uint256 receiveableTava = _tokensPerStage.mul(_elapsedDays);
+        uint256 receivedTava = sentTavasToAdr(_receiver, _vestingIdx).mul(tavaDecimal);
+
+        if(receiveableTava < receivedTava){
+            return 0;
+        } else {
+            return _ReciveableTokens = receiveableTava - receivedTava;
+        }
     }
 
     function getElapsedDays(address _receiver, uint256 _vestingIdx) 
@@ -90,9 +101,13 @@ contract TavaVesting is ITavaVesting, Ownable, ReentrancyGuard {
         require(_unlockCnt > 0, "setVesting_ERR03");
         VestingCondition memory _vestingCondition = VestingCondition(_duration, _unlockCnt, _StartDt);
         vestingInfoToWallets[_receiver].push(VestingInfo(_vestingCondition, _unlockedTokenAmount, 0, true));
-        IERC20(tavaTokenAddress).transferFrom(_msgSender(), address(this), _unlockedTokenAmount.mul(tavaDecimal));
-        TotalTokensReceiveable += _unlockedTokenAmount;
-        emit createdVesting(_receiver, vestingInfoToWallets[_receiver].length.sub(1), _unlockedTokenAmount, _duration, _unlockCnt, _StartDt);
+
+        uint256 AmountToReceived = _unlockedTokenAmount.mul(tavaDecimal);
+
+        IERC20(tavaTokenAddress).transferFrom(_msgSender(), address(this), AmountToReceived);
+        TotalTokensReceiveable += AmountToReceived;
+        emit createdVesting(_receiver, vestingInfoToWallets[_receiver].length.sub(1), AmountToReceived, _duration, _unlockCnt, _StartDt);
+
     }
 
     function cancelVesting(address _receiver, uint256 _vestingIdx) 
@@ -101,7 +116,10 @@ contract TavaVesting is ITavaVesting, Ownable, ReentrancyGuard {
         require(sentTavasToAdr(_receiver, _vestingIdx) == 0, "cancelVesting_ERR01");
         uint256 _elapsedDays = getElapsedDays(_receiver, _vestingIdx);
         require(_elapsedDays == 0, "cancelVesting_ERR02");
-        TotalTokensReceiveable = TotalTokensReceiveable.sub(vestingInfoToWallets[_receiver][_vestingIdx].TotalAmount);
+
+        uint256 TheAmountReceived = (vestingInfoToWallets[_receiver][_vestingIdx].TotalAmount).mul(tavaDecimal);
+
+        TotalTokensReceiveable = TotalTokensReceiveable.sub(TheAmountReceived);
         vestingInfoToWallets[_receiver][_vestingIdx].valid = false;
         emit canceledVesting(_receiver, _vestingIdx);
     }
@@ -115,22 +133,28 @@ contract TavaVesting is ITavaVesting, Ownable, ReentrancyGuard {
     function claimVesting(uint256 _vestingIdx) 
         external override notZeroAddress(_msgSender()) nonReentrant returns(uint256 _TokenPayout)
     {
-        require(vestingInfoToWallets[_msgSender()][_vestingIdx].valid, "claimVesting_ERR01");
+        require(vestingInfoToWallets[_msgSender()][_vestingIdx].valid, "claimVesting_ERR01");   // 취소된 베스팅인지 확인
+        
         uint256 _elapsedDays = getElapsedDays(_msgSender(), _vestingIdx);
+        
         require(_elapsedDays > 0, "claimVesting_ERR02");
+        
         uint256 _tokensSent = sentTavasToAdr(_msgSender(), _vestingIdx);
         uint256 _TotalAmount = vestingInfoToWallets[_msgSender()][_vestingIdx].TotalAmount;
+        
         require(_TotalAmount > _tokensSent, "claimVesting_ERR03");
+        
         uint256 _currentAmount = TokensCurrentlyReceiveable(_msgSender(), _vestingIdx);
+        
         require(_currentAmount > 0, "claimVesting_ERR04");
-        uint256 _currentAmountToTava = _currentAmount.div(tavaDecimal);
 
         IERC20(tavaTokenAddress).transfer(_msgSender(), _currentAmount);
-        vestingInfoToWallets[_msgSender()][_vestingIdx].tokensSent += _currentAmountToTava;
-        TotalTokensReceived += _currentAmountToTava;
-        emit claimedVesting(_msgSender(), _vestingIdx, _currentAmountToTava, block.timestamp);
 
-        _TokenPayout = _currentAmountToTava;
+        vestingInfoToWallets[_msgSender()][_vestingIdx].tokensSent += _currentAmount;
+        TotalTokensReceived += _currentAmount;
+        emit claimedVesting(_msgSender(), _vestingIdx, _currentAmount, block.timestamp);
+
+        return _TokenPayout = _currentAmount;
     }
 
     function claimTava() 
