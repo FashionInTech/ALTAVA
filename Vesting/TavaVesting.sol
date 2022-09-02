@@ -5,7 +5,7 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "./interface/ITavaVesting.sol";
+import "./ITavaVesting.sol";
 
 contract TavaVesting is ITavaVesting, Ownable, ReentrancyGuard {
     using SafeMath for uint256;
@@ -30,6 +30,7 @@ contract TavaVesting is ITavaVesting, Ownable, ReentrancyGuard {
         _;
     }
 
+    // TAVA 잔액 조회
     function BalanceToAddress(address account) 
         external view returns(uint256)
     {
@@ -137,19 +138,20 @@ contract TavaVesting is ITavaVesting, Ownable, ReentrancyGuard {
         
         uint256 _elapsedDays = getElapsedDays(_msgSender(), _vestingIdx);
         
-        require(_elapsedDays > 0, "claimVesting_ERR02");
+        require(_elapsedDays > 0, "claimVesting_ERR02"); // 경과시간이 duration 을 최초 1번 지난 경우 경과일(days 단위 표시)
         
-        uint256 _tokensSent = sentTavasToAdr(_msgSender(), _vestingIdx);
-        uint256 _TotalAmount = vestingInfoToWallets[_msgSender()][_vestingIdx].TotalAmount;
+        uint256 _tokensSent = sentTavasToAdr(_msgSender(), _vestingIdx); // 단위 ether
+        uint256 _TotalAmount = vestingInfoToWallets[_msgSender()][_vestingIdx].TotalAmount; // 단위 ether
         
         require(_TotalAmount > _tokensSent, "claimVesting_ERR03");
         
-        uint256 _currentAmount = TokensCurrentlyReceiveable(_msgSender(), _vestingIdx);
+        uint256 _currentAmount = TokensCurrentlyReceiveable(_msgSender(), _vestingIdx); // 단위 wei
         
         require(_currentAmount > 0, "claimVesting_ERR04");
 
         IERC20(tavaTokenAddress).transfer(_msgSender(), _currentAmount);
 
+        //uint256 _currentAmountToTava = _currentAmount.div(tavaDecimal); // 단위 ether
         vestingInfoToWallets[_msgSender()][_vestingIdx].tokensSent += _currentAmount;
         TotalTokensReceived += _currentAmount;
         emit claimedVesting(_msgSender(), _vestingIdx, _currentAmount, block.timestamp);
