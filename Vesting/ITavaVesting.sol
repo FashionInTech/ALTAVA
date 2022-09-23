@@ -22,13 +22,13 @@ interface ITavaVesting {
     struct VestingCondition {
         uint256 duration;
         uint256 unlockCnt;
-        uint256 StartDt;
+        uint256 startDt;
     }
 
     // [public] vesting 정보 구조체
     struct VestingInfo {
         VestingCondition vestingCondition;
-        uint256 TotalAmount;
+        uint256 totalAmount;
         uint256 tokensSent;
         bool valid;
     }
