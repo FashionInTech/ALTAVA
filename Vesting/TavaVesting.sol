@@ -121,7 +121,7 @@ contract TavaVesting is ITavaVesting, Ownable, ReentrancyGuard {
 
         IERC20(tavaTokenAddress).transferFrom(_msgSender(), address(this), AmountToReceived);
         TotalTokensReceiveable += AmountToReceived;
-        emit createdVesting(_receiver, vestingInfoToWallets[_receiver].length.sub(1), AmountToReceived, _duration, _unlockCnt, _startDt);
+        emit createdVesting(_receiver, (vestingInfoToWallets[_receiver].length -1), AmountToReceived, _duration, _unlockCnt, _startDt);
 
     }
 
@@ -134,7 +134,8 @@ contract TavaVesting is ITavaVesting, Ownable, ReentrancyGuard {
 
         uint256 TheAmountReceived = (vestingInfoToWallets[_receiver][_vestingIdx].totalAmount)*(tavaDecimal);
 
-        TotalTokensReceiveable = TotalTokensReceiveable.sub(TheAmountReceived);
+        require(TotalTokensReceiveable > TheAmountReceived, "cancelVesting_ERR03");
+        TotalTokensReceiveable = TotalTokensReceiveable - TheAmountReceived;
         vestingInfoToWallets[_receiver][_vestingIdx].valid = false;
         emit canceledVesting(_receiver, _vestingIdx);
     }
