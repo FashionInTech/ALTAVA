@@ -10,6 +10,7 @@ interface ITavaVesting {
 
         cancelVesting_ERR01 : Cancellation is not possible after receiving the compensation.
         cancelVesting_ERR02 : Cancellable period has passed.
+        cancelVesting_ERR03 : The total amount is less than the amount you want to cancel.
 
         claimVesting_ERR01 : This is a canceled vesting
         claimVesting_ERR02 : There is no quantity available yet.
