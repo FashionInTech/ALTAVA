@@ -150,7 +150,7 @@ contract TavaVesting is ITavaVesting, Ownable, ReentrancyGuard {
     function approvalTava(uint256 _amount) 
         external override 
     {
-        IERC20(tavaTokenAddress).approve(address(this), _amount);
+        IERC20(tavaTokenAddress).approve(address(this), _amount*(tavaDecimal));
     }
 
     function claimVesting(uint256 _vestingIdx) 
